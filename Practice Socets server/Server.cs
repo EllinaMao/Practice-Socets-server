@@ -10,11 +10,21 @@ namespace Practice_Socets_server
 {
     public class Server
     {
-        string ServerAnswer = "default";
         public delegate void ServerHandler(string message);
-        public event ServerHandler? ServerRecieveEvent;
-
-
+        public event ServerHandler? ServerRecieveMessage;
+        private SynchronizationContext? ui = null;
+        private void Log(string msg)
+        {
+            if (ui != null)
+                ui.Post(d => ServerRecieveMessage?.Invoke(msg), null);
+            else
+                ServerRecieveMessage?.Invoke(msg);
+        }
+        public Server(string host = "127.0.0.1", int port = 4000, SynchronizationContext ui_ = null)
+        {
+            
+            this.ui = ui_;
+        }
         public void ThreadForReceive(object param)////дочерний поток занимается общением с клиентом
         {
             Socket handler = (Socket)param;//////сокет которій поймал сервер
@@ -37,7 +47,7 @@ namespace Practice_Socets_server
                         return;
                     }
                     data = Encoding.Default.GetString(bytes, 0, bytesRec); // конвертируем массив байтов в строку                  
-                    ServerRecieveEvent?.Invoke(data);////Візов собітія
+                    ServerRecieveMessage?.Invoke(data);////Візов собітія
                     if (data.IndexOf("<end>") > -1) // если клиент отправил эту команду, то заканчиваем обработку сообщений
                     {
                         break;

@@ -5,7 +5,7 @@
         static void Main(string[] args)
         {
             Server server = new Server();
-            server.ServerRecieveEvent += (message) =>
+            server.ServerRecieveMessage += (message) =>
             {
                 Console.WriteLine("Сервер получил: " + message);
             };
