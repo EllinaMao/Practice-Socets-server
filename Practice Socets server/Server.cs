@@ -48,7 +48,7 @@ namespace Practice_Socets_server
                     }
                     data = Encoding.Default.GetString(bytes, 0, bytesRec); // конвертируем массив байтов в строку                  
                     ServerRecieveMessage?.Invoke(data);////Візов собітія
-                    if (data.IndexOf("<end>") > -1) // если клиент отправил эту команду, то заканчиваем обработку сообщений
+                    if (data.IndexOf("<Bye>") > -1) // если клиент отправил эту команду, то заканчиваем обработку сообщений
                     {
                         break;
                     }
@@ -85,7 +85,7 @@ namespace Practice_Socets_server
                 // уникальный адрес для обслуживания TCP/IP определяется комбинацией IP-адреса хоста с номером порта обслуживания
                 IPEndPoint ipEndPoint = new IPEndPoint(
                     IPAddress.Any /* Предоставляет IP-адрес, указывающий, что сервер должен контролировать действия клиентов на всех сетевых интерфейсах.*/,
-                    49152 /* порт */);
+                    4000 /* порт */);
 
                 // потоковый сокет
                 Socket sListener = new Socket(AddressFamily.InterNetwork /*схема адресации*/, SocketType.Stream /*тип сокета*/, ProtocolType.Tcp /*протокол*/ );
