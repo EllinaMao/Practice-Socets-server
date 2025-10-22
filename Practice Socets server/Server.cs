@@ -14,7 +14,7 @@ namespace Practice_Socets_server
         public event ServerHandler? ServerRecieveMessage;
         private SynchronizationContext? ui = null;
         private Socket _clientSocket = null; //client
-        
+
         private void Log(string msg)
         {
             if (ui != null)
@@ -73,7 +73,7 @@ namespace Practice_Socets_server
             }
         }
 
-             //  ожидать запросы на соединение будем в отдельном потоке
+        //  ожидать запросы на соединение будем в отдельном потоке
         public void ThreadForAccept(string host = "127.0.0.1", int port = 4000)
         {
             try
@@ -83,28 +83,44 @@ namespace Practice_Socets_server
 
                 // потоковый сокет
                 Socket sListener = new Socket(AddressFamily.InterNetwork /*схема адресации*/, SocketType.Stream /*тип сокета*/, ProtocolType.Tcp /*протокол*/ );
-              
+
                 sListener.Bind(ipEndPoint);
                 sListener.Listen(10);
                 Log("We are started. Waiting client to connect");
-                while (true)
-                {
 
-                    Socket handler = sListener.Accept();////Socket handler  инфа от клиента кот  подключился
+                _clientSocket = sListener.Accept();
+                Log("Client connected.");
 
-                    // обслуживание текущего запроса будем выполнять в отдельном потоке
-                    Thread thread = new Thread(new ParameterizedThreadStart(ThreadForReceive));
-                    thread.IsBackground = true;
-                    thread.Start(handler);
-                }
+                // Closing listening so only one will connect
+                sListener.Close();
+                Thread thread = new Thread(new ParameterizedThreadStart(ThreadForReceive));
+                thread.IsBackground = true;
+                thread.Start(_clientSocket);
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Сервер: " + ex.Message);
+                Log("Сервер: " + ex.Message);
             }
 
         }
 
+        public void Send(string msg_)
+        {
+            try
+            {
+                if (_clientSocket == null || !_clientSocket.Connected) { return; }
+
+                byte[] msg = Encoding.UTF8.GetBytes(msg_!);
+                _clientSocket.Send(msg);
+            }
+            catch (Exception ex)
+            {
+                Log(ex.ToString());
+            }
+        }
+
+
+
     }
-    }
+}
 
