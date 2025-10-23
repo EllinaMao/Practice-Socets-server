@@ -9,8 +9,7 @@
             {
                 Console.WriteLine("Сервер получил: " + message);
             };
-            Thread acceptThread = new Thread(server.ThreadForAccept);
-            acceptThread.IsBackground = true;
+            Thread acceptThread = new Thread(() => server.ThreadForAccept()); acceptThread.IsBackground = true;
             acceptThread.Start();
 
             Console.WriteLine("Сервер запущен. Нажмите Enter для выхода.");

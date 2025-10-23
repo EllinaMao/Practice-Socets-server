@@ -52,6 +52,7 @@
             botBtn.TabIndex = 1;
             botBtn.Text = "Im a Bot";
             botBtn.UseVisualStyleBackColor = true;
+            botBtn.Click += botBtn_Click;
             // 
             // Menu
             // 
@@ -63,7 +64,6 @@
             Margin = new Padding(3, 4, 3, 4);
             Name = "Menu";
             Text = "Menu";
-            Load += Menu_Load;
             ResumeLayout(false);
         }
 

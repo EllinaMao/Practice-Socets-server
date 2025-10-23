@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Practice_Socets_server
 {
@@ -14,6 +11,9 @@ namespace Practice_Socets_server
         public event ServerHandler? ServerRecieveMessage;
         private SynchronizationContext? ui = null;
         private Socket _clientSocket = null; //client
+        public string StopWord = "<Bye>";
+
+        public event Action? ClientConnected;
 
         private void Log(string msg)
         {
@@ -39,7 +39,7 @@ namespace Practice_Socets_server
                 // Получим от клиента DNS-имя хоста.
                 // Метод Receive получает данные от сокета и заполняет массив байтов, переданный в качестве аргумента
                 int bytesRec = handler.Receive(bytes); // Возвращает фактически считанное число байтов
-                client = Encoding.Default.GetString(bytes, 0, bytesRec); // конвертируем массив байтов в строку
+                client = Encoding.UTF8.GetString(bytes, 0, bytesRec); // конвертируем массив байтов в строку
                 client += "(" + handler.RemoteEndPoint.ToString() + ")";////Возвращает удаленную конечную точку.
                 while (true)
                 {
@@ -51,7 +51,7 @@ namespace Practice_Socets_server
                     data = Encoding.UTF8.GetString(bytes, 0, bytesRec); // конвертируем массив байтов в строку                  
 
                     Log(data);
-                    if (data.IndexOf("<Bye>") > -1) // если клиент отправил эту команду, то заканчиваем обработку сообщений
+                    if (data.IndexOf(StopWord) > -1) // если клиент отправил эту команду, то заканчиваем обработку сообщений
                     {
                         break;
                     }
@@ -60,7 +60,7 @@ namespace Practice_Socets_server
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message.ToString());
+                Log(ex.Message.ToString());
             }
             finally
             {
@@ -90,6 +90,7 @@ namespace Practice_Socets_server
 
                 _clientSocket = sListener.Accept();
                 Log("Client connected.");
+                ui?.Post(d => ClientConnected?.Invoke(), null);
 
                 // Closing listening so only one will connect
                 sListener.Close();
