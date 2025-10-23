@@ -11,11 +11,19 @@ namespace Practice_Socets_server
         public event ServerHandler? ServerRecieveMessage;
         private SynchronizationContext? ui = null;
         private Socket _clientSocket = null; //client
-        public string StopWord = "<Bye>";
+        public readonly string StopWord = "<Bye>";
 
         public event Action? ClientConnected;
+        public event ServerHandler? ServerLogMessage;
 
         private void Log(string msg)
+        {
+            if (ui != null)
+                ui.Post(d => ServerLogMessage?.Invoke(msg), null);
+            else
+                ServerLogMessage?.Invoke(msg);
+        }
+        private void Message(string msg)
         {
             if (ui != null)
                 ui.Post(d => ServerRecieveMessage?.Invoke(msg), null);
@@ -50,7 +58,7 @@ namespace Practice_Socets_server
                     }
                     data = Encoding.UTF8.GetString(bytes, 0, bytesRec); // конвертируем массив байтов в строку                  
 
-                    Log(data);
+                    Message(data);
                     if (data.IndexOf(StopWord) > -1) // если клиент отправил эту команду, то заканчиваем обработку сообщений
                     {
                         break;
@@ -100,7 +108,7 @@ namespace Practice_Socets_server
             }
             catch (Exception ex)
             {
-                Log("Сервер: " + ex.Message);
+                Log("Server: " + ex.Message);
             }
 
         }

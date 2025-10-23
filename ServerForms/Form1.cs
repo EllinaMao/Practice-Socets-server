@@ -1,5 +1,6 @@
 ﻿//using BotAnswers; //ToDo - trasfer file
 using Practice_Socets_server;
+using System;
 
 namespace ServerForms
 {
@@ -19,8 +20,9 @@ namespace ServerForms
 
         private void Form1_Load(object sender, EventArgs e)
         {
+
             richTextBox1.Enabled = false;
-            button1.Enabled = false;
+            sendBtn.Enabled = false;
             if (IsBot)
             {
                 this.Text = "I`m s bot";
@@ -29,12 +31,7 @@ namespace ServerForms
             {
                 this.Text = "I`m a human";
             }
-            server = new Server(_uiContext);
-            server.ServerRecieveMessage += Server_ServerRecieveMessage;
-            server.ClientConnected += Server_OnClientConnected;
-            Thread serverThread = new Thread(() => server.ThreadForAccept());
-            serverThread.IsBackground = true;
-            serverThread.Start();
+
         }
 
         private void Server_OnClientConnected()
@@ -44,26 +41,24 @@ namespace ServerForms
             if (!IsBot)
             {
                 richTextBox1.Enabled = true;
-                button1.Enabled = true;
+                sendBtn.Enabled = true;
             }
         }
 
-        private void Server_ServerRecieveMessage(string message)
+        private void Server_OnReceiveMessage(string message)
         {
-            LogMessage(message);
+            LogMessage($"Client: {message}");
 
             if (message.IndexOf(server.StopWord) > -1)
             {
                 LogMessage("Client disconnected. Chat ended.");
                 richTextBox1.Enabled = false;
-                button1.Enabled = false;
+                sendBtn.Enabled = false;
                 return;
             }
             if (IsBot)
             {
-                // TODO: Переконайтеся, що клас BotAnswers додано до цього проєкту
-                // string reply = BotAnswers.ComputerAnswers.GetRandomAnswer();
-                string reply = "I am a bot, i received: " + message; // Тимчасова відповідь
+                string reply = BotAnswers.ComputerAnswers.GetRandomAnswer();
                 server.Send(reply);
                 LogMessage($"Bot: {reply}");
             }
@@ -99,6 +94,51 @@ namespace ServerForms
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
             server?.Send(server?.StopWord);
+
+        }
+
+        private void startBtn_Click(object sender, EventArgs e)
+        {
+            if (textBoxIp.Text.Trim().Length == 0)
+            {
+                MessageBox.Show("Please, enter valid IP adress");
+                return;
+            }
+            if (textBoxPort.Text.Trim().Length == 0)
+            {
+                MessageBox.Show("Please, enter valid port");
+                return;
+            }
+            try
+            {
+                int port;
+                if (!int.TryParse(textBoxPort.Text.Trim(), out port))
+                {
+                    MessageBox.Show("Please, enter a valid port number (e.g., 4000)");
+                    return;
+                }
+                string ip = textBoxIp.Text.Trim();
+                server = new Server(_uiContext);
+                server.ClientConnected += Server_OnClientConnected;
+                server.ServerLogMessage += Server_OnLogMessage; 
+                server.ServerRecieveMessage += Server_OnReceiveMessage;
+                Thread serverThread = new Thread(() => server.ThreadForAccept(ip, port));
+                serverThread.IsBackground = true;
+                serverThread.Start();
+
+                startBtn.Enabled = false;
+                textBoxIp.Enabled = false;
+                textBoxPort.Enabled = false;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error while connecting: " + ex.Message);
+            }
+        }
+
+        private void Server_OnLogMessage(string message)
+        {
+            LogMessage(message);
         }
     }
 }
