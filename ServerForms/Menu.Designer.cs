@@ -34,31 +34,36 @@
             // 
             // humanBtn
             // 
-            humanBtn.Location = new Point(29, 48);
+            humanBtn.Location = new Point(33, 64);
+            humanBtn.Margin = new Padding(3, 4, 3, 4);
             humanBtn.Name = "humanBtn";
-            humanBtn.Size = new Size(264, 23);
+            humanBtn.Size = new Size(302, 31);
             humanBtn.TabIndex = 0;
             humanBtn.Text = "Im a Human";
             humanBtn.UseVisualStyleBackColor = true;
+            humanBtn.Click += humanBtn_Click;
             // 
             // botBtn
             // 
-            botBtn.Location = new Point(29, 86);
+            botBtn.Location = new Point(33, 115);
+            botBtn.Margin = new Padding(3, 4, 3, 4);
             botBtn.Name = "botBtn";
-            botBtn.Size = new Size(264, 23);
+            botBtn.Size = new Size(302, 31);
             botBtn.TabIndex = 1;
             botBtn.Text = "Im a Bot";
             botBtn.UseVisualStyleBackColor = true;
             // 
             // Menu
             // 
-            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(319, 168);
+            ClientSize = new Size(365, 224);
             Controls.Add(botBtn);
             Controls.Add(humanBtn);
+            Margin = new Padding(3, 4, 3, 4);
             Name = "Menu";
             Text = "Menu";
+            Load += Menu_Load;
             ResumeLayout(false);
         }
 

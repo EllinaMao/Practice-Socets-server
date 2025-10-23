@@ -35,40 +35,46 @@
             // 
             // button1
             // 
-            button1.Location = new Point(12, 414);
+            button1.Location = new Point(14, 552);
+            button1.Margin = new Padding(3, 4, 3, 4);
             button1.Name = "button1";
-            button1.Size = new Size(324, 23);
+            button1.Size = new Size(370, 31);
             button1.TabIndex = 0;
             button1.Text = "button1";
             button1.UseVisualStyleBackColor = true;
+            button1.Click += button1_Click;
             // 
             // richTextBox1
             // 
-            richTextBox1.Location = new Point(12, 333);
+            richTextBox1.Location = new Point(14, 444);
+            richTextBox1.Margin = new Padding(3, 4, 3, 4);
             richTextBox1.Name = "richTextBox1";
-            richTextBox1.Size = new Size(324, 73);
+            richTextBox1.Size = new Size(370, 96);
             richTextBox1.TabIndex = 1;
             richTextBox1.Text = "";
             // 
             // listBox1
             // 
             listBox1.FormattingEnabled = true;
-            listBox1.ItemHeight = 15;
-            listBox1.Location = new Point(12, 12);
+            listBox1.HorizontalScrollbar = true;
+            listBox1.Location = new Point(14, 16);
+            listBox1.Margin = new Padding(3, 4, 3, 4);
             listBox1.Name = "listBox1";
-            listBox1.Size = new Size(324, 304);
+            listBox1.Size = new Size(370, 404);
             listBox1.TabIndex = 2;
             // 
             // Form1
             // 
-            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(348, 450);
+            ClientSize = new Size(398, 600);
             Controls.Add(listBox1);
             Controls.Add(richTextBox1);
             Controls.Add(button1);
+            Margin = new Padding(3, 4, 3, 4);
             Name = "Form1";
             Text = "Form1";
+            FormClosing += Form1_FormClosing;
             Load += Form1_Load;
             ResumeLayout(false);
         }
