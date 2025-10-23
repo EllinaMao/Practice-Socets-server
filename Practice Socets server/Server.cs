@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Practice_Socets_server
 {
@@ -13,16 +10,29 @@ namespace Practice_Socets_server
         public delegate void ServerHandler(string message);
         public event ServerHandler? ServerRecieveMessage;
         private SynchronizationContext? ui = null;
+        private Socket _clientSocket = null; //client
+        public readonly string StopWord = "<Bye>";
+
+        public event Action? ClientConnected;
+        public event ServerHandler? ServerLogMessage;
+
         private void Log(string msg)
+        {
+            if (ui != null)
+                ui.Post(d => ServerLogMessage?.Invoke(msg), null);
+            else
+                ServerLogMessage?.Invoke(msg);
+        }
+        private void Message(string msg)
         {
             if (ui != null)
                 ui.Post(d => ServerRecieveMessage?.Invoke(msg), null);
             else
                 ServerRecieveMessage?.Invoke(msg);
         }
-        public Server(string host = "127.0.0.1", int port = 4000, SynchronizationContext ui_ = null)
+        public Server(SynchronizationContext ui_ = null)
         {
-            
+
             this.ui = ui_;
         }
         public void ThreadForReceive(object param)////дочерний поток занимается общением с клиентом
@@ -37,33 +47,28 @@ namespace Practice_Socets_server
                 // Получим от клиента DNS-имя хоста.
                 // Метод Receive получает данные от сокета и заполняет массив байтов, переданный в качестве аргумента
                 int bytesRec = handler.Receive(bytes); // Возвращает фактически считанное число байтов
-                client = Encoding.Default.GetString(bytes, 0, bytesRec); // конвертируем массив байтов в строку
+                client = Encoding.UTF8.GetString(bytes, 0, bytesRec); // конвертируем массив байтов в строку
                 client += "(" + handler.RemoteEndPoint.ToString() + ")";////Возвращает удаленную конечную точку.
                 while (true)
                 {
                     bytesRec = handler.Receive(bytes); // принимаем данные, переданные клиентом. Если данных нет, поток блокируется
                     if (bytesRec == 0)
                     {
-                        return;
+                        break;
                     }
-                    data = Encoding.Default.GetString(bytes, 0, bytesRec); // конвертируем массив байтов в строку                  
-                    ServerRecieveMessage?.Invoke(data);////Візов собітія
-                    if (data.IndexOf("<Bye>") > -1) // если клиент отправил эту команду, то заканчиваем обработку сообщений
+                    data = Encoding.UTF8.GetString(bytes, 0, bytesRec); // конвертируем массив байтов в строку                  
+
+                    Message(data);
+                    if (data.IndexOf(StopWord) > -1) // если клиент отправил эту команду, то заканчиваем обработку сообщений
                     {
                         break;
                     }
-
-                    string unsw = "I am server. I receive from client: " + data;
-                    byte[] unswB = Encoding.Default.GetBytes(unsw);
-                    handler.Send(unswB);
                 }
-                string theReply = "Я завершаю обработку сообщений";
-                byte[] msg = Encoding.Default.GetBytes(theReply); // конвертируем строку в массив байтов
-                handler.Send(msg); // отправляем клиенту сообщение
+
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message.ToString());
+                Log(ex.Message.ToString());
             }
             finally
             {
@@ -76,48 +81,55 @@ namespace Practice_Socets_server
             }
         }
 
-             //  ожидать запросы на соединение будем в отдельном потоке
-        public void ThreadForAccept()
+        //  ожидать запросы на соединение будем в отдельном потоке
+        public void ThreadForAccept(string host = "127.0.0.1", int port = 4000)
         {
             try
             {
-                // установим для сокета адрес локальной конечной точки
-                // уникальный адрес для обслуживания TCP/IP определяется комбинацией IP-адреса хоста с номером порта обслуживания
-                IPEndPoint ipEndPoint = new IPEndPoint(
-                    IPAddress.Any /* Предоставляет IP-адрес, указывающий, что сервер должен контролировать действия клиентов на всех сетевых интерфейсах.*/,
-                    4000 /* порт */);
+                IPAddress ip = IPAddress.Parse(host);
+                IPEndPoint ipEndPoint = new IPEndPoint(ip, port);
 
                 // потоковый сокет
                 Socket sListener = new Socket(AddressFamily.InterNetwork /*схема адресации*/, SocketType.Stream /*тип сокета*/, ProtocolType.Tcp /*протокол*/ );
-                /* Значение InterNetwork указывает на то, что при подключении объекта Socket к конечной точке предполагается использование IPv4-адреса.
-                   SocketType.Stream поддерживает надежные двусторонние байтовые потоки в режиме с установлением подключения, без дублирования данных и 
-                   без сохранения границ данных. Объект Socket этого типа взаимодействует с одним узлом и требует предварительного установления подключения 
-                   к удаленному узлу перед началом обмена данными. Тип Stream использует протокол Tcp и схему адресации AddressFamily .
-                 */
 
-                // Чтобы сокет клиента мог идентифицировать потоковый сокет TCP, сервер должен дать своему сокету имя
-                sListener.Bind(ipEndPoint); // Свяжем объект Socket с локальной конечной точкой.
-                //
-                // Установим объект Socket в состояние прослушивания.
-                sListener.Listen(10 /* Максимальная длина очереди ожидающих подключений.*/ );
-                while (true)
-                {
+                sListener.Bind(ipEndPoint);
+                sListener.Listen(10);
+                Log("We are started. Waiting client to connect");
 
-                    Socket handler = sListener.Accept();////Socket handler  инфа от клиента кот  подключился
+                _clientSocket = sListener.Accept();
+                Log("Client connected.");
+                ui?.Post(d => ClientConnected?.Invoke(), null);
 
-                    // обслуживание текущего запроса будем выполнять в отдельном потоке
-                    Thread thread = new Thread(new ParameterizedThreadStart(ThreadForReceive));
-                    thread.IsBackground = true;
-                    thread.Start(handler);
-                }
+                // Closing listening so only one will connect
+                sListener.Close();
+                Thread thread = new Thread(new ParameterizedThreadStart(ThreadForReceive));
+                thread.IsBackground = true;
+                thread.Start(_clientSocket);
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Сервер: " + ex.Message);
+                Log("Server: " + ex.Message);
             }
 
         }
 
+        public void Send(string msg_)
+        {
+            try
+            {
+                if (_clientSocket == null || !_clientSocket.Connected) { return; }
+
+                byte[] msg = Encoding.UTF8.GetBytes(msg_!);
+                _clientSocket.Send(msg);
+            }
+            catch (Exception ex)
+            {
+                Log(ex.ToString());
+            }
+        }
+
+
+
     }
-    }
+}
 
